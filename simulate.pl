@@ -55,7 +55,7 @@ push @jumps, $Nmax
 OUTTER: foreach my $i (@jumps){
 	INNER: foreach my $j (1 .. $rep){
 		my $seed = int(rand()*1000);
-		@command = ("./L-MAC $time $i $length $bandwidth $protocol $errors $seed"); 
+		@command = ("./DCF $time $i $length $bandwidth $protocol $errors $seed"); 
 		print ("\n\n****Node #$i of $Nmax ($?).\n");
 		print ("****Iteration #$j of $rep.\n");
 		print ("**** @command\n");
