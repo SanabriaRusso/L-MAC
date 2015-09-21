@@ -14,7 +14,7 @@ my %help = (
 				'--help'	=> 1
 			);
 
-die ("******Help\n", "ARGV. field:\n", "0. Repetitions 1. Time 2. Nmax 3. Nmin 4. Jumps 5. Bandwidth 6. Channel errors 7. EDCA share 8. ECA Code 9. numACs\n") 
+die ("******Help\n", "ARGV. field:\n", "0. Repetitions 1. Time 2. Nmax 3. Nmin 4. Jumps 5. Bandwidth 6. Channel errors 7. protocol\n") 
 	if (exists $help{$ARGV[0]});
 
 my $rep = $ARGV[0];
@@ -24,69 +24,14 @@ my $Nmin = $ARGV[3];
 my $jump = $ARGV[4];
 my $bandwidth = $ARGV[5];
 my $errors = $ARGV[6];
-my $EDCA_share = $ARGV[7];
-my $ECA = $ARGV[8];
-my $numACs = $ARGV[9];
+my $protocol = $ARGV[7];
 my $length = 1470;
-my $batch = 1;
-my $drift = 0;
-my $maxAggregation = 0;
-
-my $stickiness = 0;
-my $fairShare = 0;
 
 print ("Going to simulate:\n");
 if ($Nmax == $Nmin){
-	print ("\t$rep repetitions of $time seconds, ", $Nmin, " stations, $bandwidth Mbps, errors $errors and ECA $ECA with $numACs ACs.\n\n\n");	
+	print ("\t$rep repetitions of $time seconds, ", $Nmin, " stations, $bandwidth Mbps, errors $errors and prot $protocol.\n\n\n");	
 }else{
-	print ("\t$rep repetitions jumping $jump of $time seconds, ", ($Nmax - $Nmin), " stations, $bandwidth Mbps, errors $errors and ECA $ECA with $numACs ACs.\n\n\n");
-}
-
-switch ($ECA){
-	case 0 {
-		$stickiness = 0;
-		$fairShare = 0;
-		
-	}
-	case 1 {
-		$stickiness = 1;
-		$fairShare = 0;
-		
-	}
-	case 2 {
-		$ECA = 1;
-		$stickiness = 0;
-		$fairShare = 0;
-		
-	}
-	case 3 {
-		$ECA = 1; 
-		$stickiness = 2;
-		$fairShare = 0;
-		
-	}
-	case 4 {
-		$ECA = 1;
-		$stickiness = 2;
-		$fairShare = 1;
-	}
-	case 5 {
-		$ECA = 1;
-		$stickiness = 2;
-		$fairShare = 1;
-	}
-	case 6 {
-		$ECA = 0;
-		$stickiness = 0;
-		$fairShare = 0;
-		$maxAggregation = 1 ;
-	}
-	case 7 {
-		$ECA = 0;
-		$stickiness = 0;
-		$fairShare = 1;
-		$maxAggregation = 0;
-	}
+	print ("\t$rep repetitions jumping $jump of $time seconds, ", ($Nmax - $Nmin), " stations, $bandwidth Mbps, errors $errors and protocol $protocol.\n\n\n");
 }
 
 my $compile = './build_local';
@@ -110,7 +55,7 @@ push @jumps, $Nmax
 OUTTER: foreach my $i (@jumps){
 	INNER: foreach my $j (1 .. $rep){
 		my $seed = int(rand()*1000);
-		@command = ("./ECA_exec $time $i $length $bandwidth $batch $ECA $stickiness $fairShare $errors $drift $EDCA_share $maxAggregation $numACs $seed"); 
+		@command = ("./L-MAC $time $i $length $bandwidth $protocol $errors $seed"); 
 		print ("\n\n****Node #$i of $Nmax ($?).\n");
 		print ("****Iteration #$j of $rep.\n");
 		print ("**** @command\n");
@@ -122,12 +67,8 @@ OUTTER: foreach my $i (@jumps){
 
 #Calling the parser
 my $parserFile = 'process.pl';
-my $parseSlots = 'analyseSlots.pl';
 my $dataFile = 'Results/output.txt';
-my $slotsFile = 'Results/slotsInTime.txt';
 my @parseCommand = ("./$parserFile $dataFile");
 system(@parseCommand);
 (print ("\n\n********Processing failed\n") and last OUTTER) if ($? != 0);
-@parseCommand = ("./$parseSlots $slotsFile");
-system(@parseCommand);
-(print ("\n\n********Processing failed\n") and last OUTTER) if ($? != 0);
+
