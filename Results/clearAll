@@ -1,5 +1,0 @@
-#!/bin/sh
-rm *.txt > /dev/null 2>&1;
-rm *.dat > /dev/null 2>&1;
-rm stations/*.log > /dev/null 2>&1;
-rm stations/*.dat > /dev/null 2>&1;
