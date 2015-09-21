@@ -1,0 +1,4 @@
+set xlabel "Contenders (N)"
+set ylabel "Average time between successful transmissions (s)"
+set key left
+plot "1.txt" u 1:($42) notitle w l ls 1 lw 2, "" u 1:($42) title "avg. Time between SxTx: BK 1" w p ls 1, "" u 1:($44) notitle w l ls 3 lw 2, "" u 1:($44) title "avg. Time between SxTx: BE 1" w p ls 3, "" u 1:($46) notitle w l ls 7 lw 2, "" u 1:($46) title "avg. Time between SxTx: VI 1" w p ls 7, "" u 1:($48) notitle w l ls 9 lw 2, "" u 1:($48) title "avg. Time between SxTx: VO 1" w p ls 9, "2.txt" u 1:($42) notitle w l ls 10 lw 2, "" u 1:($42) title "avg. Time between SxTx: BK 2" w p ls 10, "" u 1:($44) notitle w l ls 30 lw 2, "" u 1:($44) title "avg. Time between SxTx: BE 2" w p ls 30, "" u 1:($46) notitle w l ls 70 lw 2, "" u 1:($46) title "avg. Time between SxTx: VI 2" w p ls 70, "" u 1:($48) notitle w l ls 90 lw 2, "" u 1:($48) title "avg. Time between SxTx: VO 2" w p ls 90

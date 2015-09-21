@@ -1,0 +1,1 @@
+gnuplot -e "basicECA='basicECA.dat';ECADynAgg='ECA-halving-dynamic-aggressive.dat';ECADyn='ECA-halving-dynamic.dat';ECAagg='ECA-halving-aggressive.dat';DCF='DCF.dat';ECA='ECA-reset-dyn-bit1.dat'" col.gp

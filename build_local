@@ -1,0 +1,3 @@
+./COST/cxx2 Sim_SlottedCSMA.cc
+g++ -Wall -o ECA_exec Sim_SlottedCSMA.cxx
+
