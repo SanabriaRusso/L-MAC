@@ -5,14 +5,14 @@ using namespace std;
 void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int backlog, int ack){
 	int CWmin = 16;
 
-	if(backlog != -1)
+	if(backlog != 3)
 	{
 		if(ack == 1){
 			counter = CWmin -1;
 			return;
 		}
 
-		srand(time(NULL)); // Seed the time
+		// srand(time(NULL)); // Seed the time
 		int coin = rand() % (int)(100 - 1) + 1;
 
 		if(coin < (int) ((BETA/CWmin) * 100)){
