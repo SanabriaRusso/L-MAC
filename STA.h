@@ -116,7 +116,7 @@ void STA :: Start()
     accummTimeBetSxTx = 0;
 
     //Debug
-    txDebug = 1;    //Debug in transmission operations [0-1]
+    txDebug = 0;    //Debug in transmission operations [0-1]
 };
 
 void STA :: Stop()
@@ -274,6 +274,7 @@ void STA :: in_slot(SLOT_notification &slot)
             ITx = 1;
             tx++;              
             out_packet(packet);
+            if(txDebug == 1) cout << "+++txDebug " << SimTime() << " Node-" << id << " made tx #" << tx << endl;
         }else if(backlog == 0){
             ITx = 1;
             if(txDebug == 1) cout << "+++txDebug " << SimTime() << " Node-" << id << " made virtual tx" << endl;

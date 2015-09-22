@@ -53,6 +53,7 @@ component Channel : public TypeII
 		int aggregation;
 		float errorProbability;
 		int rate;	//	are we using the 48mbps metrics for tx duration?
+		int txDebug;
 
 
 	public: // Statistics
@@ -89,6 +90,7 @@ void Channel :: Start()
 	errorProbability = 0;
 
 	rate = 11;
+	txDebug = 0;
 
 	slot_time.Set(SimTime()); // Let's go!	
 };
@@ -147,10 +149,18 @@ void Channel :: EndReceptionTime(trigger_t &)
 
 void Channel :: in_packet(Packet &packet)
 {
+	errorProbability = rand() % (int) 100;
 	number_of_transmissions_in_current_slot++;
+	//Adding error probability
+	if( (errorProbability > 0) && (errorProbability <= (int)(error*100)) ){ 
+		number_of_transmissions_in_current_slot++;
+		if(txDebug == 1) cout << "+++Channel-txDebug " << SimTime() << " channel error induced" << endl;
+	}
+
+
 	if(packet.L > L_max) L_max = packet.L;
+	//default
 	succ_tx_duration = (SIFS + 32e-06 + ceil((16 + aggregation*(32+(L_max*8)+288) + 6)/LDBPS)*TSYM + SIFS + TBack + DIFS + empty_slot_duration);
-	
 	double ACK;
 	double frame;
 

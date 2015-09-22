@@ -4,6 +4,7 @@ using namespace std;
 
 void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int backlog, int ack){
 	int CWmin = 16;
+	int txDebug = 0;
 
 	if(backlog != 3)
 	{
@@ -12,15 +13,17 @@ void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int b
 			return;
 		}
 
-		// srand(time(NULL)); // Seed the time
 		int coin = rand() % (int)(100 - 1) + 1;
-
+		if(txDebug == 1) cout << "Coin: " << coin << endl;
 		if(coin < (int) ((BETA/CWmin) * 100)){
 			counter = CWmin -1;
+			if(txDebug == 1) cout << "Reusing the slot after collision" << coin << endl;
 			return;
 		}else{
 			//A random backoff that is not the cycle length
 			counter = rand() % (int) (CWmin -2);
+			if(counter == 0) counter++;
+			if(txDebug == 1) cout << "Not reusing, random " << counter << endl;
 		}		
 	}
 
