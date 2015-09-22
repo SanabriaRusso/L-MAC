@@ -13,7 +13,7 @@ void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int b
 		}
 
 		srand(time(NULL)); // Seed the time
-		int coin = rand() % (100 - 1) + 1;
+		int coin = rand() % (int)(100 - 1) + 1;
 
 		if(coin < (int) ((BETA/CWmin) * 100)){
 			counter = CWmin -1;

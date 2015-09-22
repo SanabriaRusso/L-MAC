@@ -100,7 +100,7 @@ void STA :: Start()
     tx = 0;
     sxTx = 0;
     colTx = 0;
-    backlog = -1;
+    backlog = 3;
     ITx = 0;
     retAttempt = 0;
     ack = 0;
@@ -151,72 +151,83 @@ void STA :: in_slot(SLOT_notification &slot)
     {
         //Empty slot
         case 0:
-            switch(backlog){
-                case -1:
-                    backlog = 0;
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
-                    break;
-                case 1:
-                    if(backoffCounter > 0) backoffCounter--;
-                    break;
-                default:
-                    if(backoffCounter > 0) backoffCounter--;
-                    if(MAC.QueueSize() > 0)
-                    {
-                        backlog = 1;
-                        pickNewPacket(packet,MAC,id,SimTime());
-                    }
-                    //The moment the stations checks if its previous tx slot is empty or not
-                    if(ITx = 1){
-                        ack = 1;
-                        computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
-                        ack = 0;
-                        ITx = 0;
-                    }
-                    break;
-            }
-            // if(backlog == 1){
-                // if(backoffCounter > 0){
-                    // backoffCounter--;
-                // }
-            // }else if(backlog == 0){
-                // if(MAC.QueueSize() > 0)
-                // {
-                    // backlog = 1;
-                    // pickNewPacket(packet,MAC,id,SimTime());
-                // }
-            // }else if(backlog == -1){    //entering at bootup to start counter
-                // backlog = 0;
-                // computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+            // switch(backlog){
+            //     case 3:
+            //         //Initial setup of the counter
+            //         backlog = 0;
+            //         computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+            //         break;
+            //     case 1:
+            //         if(backoffCounter > 0) backoffCounter--;
+            //         break;
+            //     default:
+            //         if(backoffCounter > 0) backoffCounter--;
+            //         if(MAC.QueueSize() > 0)
+            //         {
+            //             backlog = 1;
+            //             pickNewPacket(packet,MAC,id,SimTime());
+            //         }
+            //         //The moment the stations checks if its previous tx slot is empty or not
+            //         if(ITx = 1){
+            //             ack = 1;
+            //             computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+            //             ack = 0;
+            //             ITx = 0;
+            //         }
+            //         break;
             // }
-            break;
+            // break;
+            if(backlog == 1){
+                if(backoffCounter > 0){
+                    backoffCounter--;
+                }
+            }else{
+                if(MAC.QueueSize() > 0)
+                {
+                    backlog = 1;
+                    pickNewPacket(packet,MAC,id,SimTime());
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                }
+            }
+
+
+
         //Successful transmission
         case 1:
             //If this station transmitted in observed slot,
             //we assign a new backoff counter
             if(ITx == 1){
-                if(backlog == 1){
-                    sxTx++;
-                    ack = 1;
-                    accummTimeBetSxTx += double(SimTime() - packet.contention_time);
-                    erasePacketsFromQueue(MAC,erased);
-                    ITx = 0;    //resetting to zero
-                    if(protocol != 2) backoffStage = 0;   //resetting backoff stage for DCF and L-MAC
-                    backlog = 0;
-                    if(MAC.QueueSize() > 0) backlog = 1;
-                    if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
-                    ack = 0;    //ack only used to determine the backoff counter
-                }else if(backlog == 0)
-                //This is the event of observing someone else's transmission
-                //in what it is supposed to be an empty slot.
-                //Ack is zero.
-                {
-                    ITx = 0;    //resetting to zero
-                    if(MAC.QueueSize() > 0) backlog = 1;
-                    if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
-                }
+                // if(backlog == 1){
+                //     sxTx++;
+                //     ack = 1;
+                //     accummTimeBetSxTx += double(SimTime() - packet.contention_time);
+                //     erasePacketsFromQueue(MAC,erased);
+                //     ITx = 0;    //resetting to zero
+                //     if(protocol != 2) backoffStage = 0;   //resetting backoff stage for DCF and L-MAC
+                //     backlog = 0;
+                //     if(MAC.QueueSize() > 0) backlog = 1;
+                //     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                //     computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                //     ack = 0;    //ack only used to determine the backoff counter
+                // }else if(backlog == 0)
+                // //This is the event of observing someone else's transmission
+                // //in what it is supposed to be an empty slot.
+                // //Ack is zero.
+                // {
+                //     ITx = 0;    //resetting to zero
+                //     if(MAC.QueueSize() > 0) backlog = 1;
+                //     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                //     computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                // }
+                sxTx++;
+                accummTimeBetSxTx += double(SimTime() - packet.contention_time);
+                erasePacketsFromQueue(MAC,erased);
+                ITx = 0;    //resetting to zero
+                backoffStage = 0;   //resetting backoff stage for DCF
+                backlog = 0;
+                if(MAC.QueueSize() > 0) backlog = 1;
+                if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
             }else
             //If we observe a sxTx slot, we decrement the counter.
             //Only the sta involved in the sxTx will not decrement it.
@@ -228,32 +239,46 @@ void STA :: in_slot(SLOT_notification &slot)
             break;
         default:
             if(ITx == 1){
-                if(backlog == 1){
-                    colTx++;
-                    retAttempt++;
-                    backoffStage = min(backoffStage + 1,MAXSTAGE);
-                    ITx = 0;
-                    if(retAttempt == MAX_RET){
-                        accummTimeBetSxTx = double(SimTime() - packet.contention_time);
-                        erasePacketsFromQueue(MAC,erased);
-                        dropped++;
-                        backoffStage = 0;   //Resetting due to drop
-                        retAttempt = 0;
-                        backlog = 0;
-                        if(MAC.QueueSize() > 0) backlog = 1;
-                        if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                    }
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
-                }else if(backlog == 0){
-                //This is the event of observing someone else's transmission
-                //in what it is supposed to be an empty slot.
-                //Ack is zero.
-                {
-                    ITx = 0;    //resetting to zero
+                // if(backlog == 1){
+                //     colTx++;
+                //     retAttempt++;
+                //     backoffStage = min(backoffStage + 1,MAXSTAGE);
+                //     ITx = 0;
+                //     if(retAttempt == MAX_RET){
+                //         accummTimeBetSxTx = double(SimTime() - packet.contention_time);
+                //         erasePacketsFromQueue(MAC,erased);
+                //         dropped++;
+                //         backoffStage = 0;   //Resetting due to drop
+                //         retAttempt = 0;
+                //         backlog = 0;
+                //         if(MAC.QueueSize() > 0) backlog = 1;
+                //         if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                //     }
+                //     computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                // }else if(backlog == 0){
+                // //This is the event of observing someone else's transmission
+                // //in what it is supposed to be an empty slot.
+                // //Ack is zero.
+                // {
+                //     ITx = 0;    //resetting to zero
+
+                colTx++;
+                retAttempt++;
+                backoffStage = min(backoffStage + 1,MAXSTAGE);
+                ITx = 0;
+                if(retAttempt == MAX_RET){
+                    accummTimeBetSxTx = double(SimTime() - packet.contention_time);
+                    erasePacketsFromQueue(MAC,erased);
+                    dropped++;
+                    backoffStage = 0;   //Resetting due to drop
+                    retAttempt = 0;
+                    backlog = 0;
+
                     if(MAC.QueueSize() > 0) backlog = 1;
                     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                    // computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
                 }
+            computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
             }else{
                 if(backoffCounter > 0){
                     backoffCounter--;
@@ -264,13 +289,19 @@ void STA :: in_slot(SLOT_notification &slot)
 
     //Transmission
     if(backoffCounter == 0){
-        if(backlog != -1){ 
-            ITx = 1;
-            if(backlog == 1){
-                preparePacketForTransmission(packet,id,SimTime());
-                tx++;              
-                out_packet(packet);
-        }
+        // if(backlog != 3){ 
+        //     ITx = 1;
+        //     if(backlog == 1){
+        //         preparePacketForTransmission(packet,id,SimTime());
+        //         tx++;              
+        //         out_packet(packet);
+        // }
+
+        preparePacketForTransmission(packet,id,SimTime());
+        tx++;
+        ITx = 1;
+        // cout << SimTime() << " transmitting" << endl;
+        out_packet(packet);
     }
 };
 
@@ -285,4 +316,3 @@ void STA :: in_packet(Packet &packet)
     }
 
 }
-
