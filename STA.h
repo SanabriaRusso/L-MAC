@@ -3,9 +3,6 @@ In principle:
     1) from bootup stations keep a backoff counter,
     even if they are not backlogged.
 */
-
-
-
 #include <time.h>
 #include <iostream>
 #include <fstream>
@@ -103,7 +100,7 @@ void STA :: Start()
     tx = 0;
     sxTx = 0;
     colTx = 0;
-    backlog = 0;
+    backlog = -1;
     ITx = 0;
     retAttempt = 0;
     ack = 0;
@@ -111,7 +108,6 @@ void STA :: Start()
     //Packet details
     packet.L = L;
     packet.source = id;
-	
 
     //Statistics
     accummTimeBetSxTx = 0;
@@ -170,6 +166,13 @@ void STA :: in_slot(SLOT_notification &slot)
                         backlog = 1;
                         pickNewPacket(packet,MAC,id,SimTime());
                     }
+                    //The moment the stations checks if its previous tx slot is empty or not
+                    if(ITx = 1){
+                        ack = 1;
+                        computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                        ack = 0;
+                        ITx = 0;
+                    }
                     break;
             }
             // if(backlog == 1){
@@ -192,17 +195,28 @@ void STA :: in_slot(SLOT_notification &slot)
             //If this station transmitted in observed slot,
             //we assign a new backoff counter
             if(ITx == 1){
-                sxTx++;
-                ack = 1;
-                accummTimeBetSxTx += double(SimTime() - packet.contention_time);
-                erasePacketsFromQueue(MAC,erased);
-                ITx = 0;    //resetting to zero
-                if(protocol != 2) backoffStage = 0;   //resetting backoff stage for DCF and L-MAC
-                backlog = 0;
-                if(MAC.QueueSize() > 0) backlog = 1;
-                if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
-                ack = 0;    //ack only used to determine the backoff counter
+                if(backlog == 1){
+                    sxTx++;
+                    ack = 1;
+                    accummTimeBetSxTx += double(SimTime() - packet.contention_time);
+                    erasePacketsFromQueue(MAC,erased);
+                    ITx = 0;    //resetting to zero
+                    if(protocol != 2) backoffStage = 0;   //resetting backoff stage for DCF and L-MAC
+                    backlog = 0;
+                    if(MAC.QueueSize() > 0) backlog = 1;
+                    if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                    ack = 0;    //ack only used to determine the backoff counter
+                }else if(backlog == 0)
+                //This is the event of observing someone else's transmission
+                //in what it is supposed to be an empty slot.
+                //Ack is zero.
+                {
+                    ITx = 0;    //resetting to zero
+                    if(MAC.QueueSize() > 0) backlog = 1;
+                    if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                }
             }else
             //If we observe a sxTx slot, we decrement the counter.
             //Only the sta involved in the sxTx will not decrement it.
@@ -214,21 +228,32 @@ void STA :: in_slot(SLOT_notification &slot)
             break;
         default:
             if(ITx == 1){
-                colTx++;
-                retAttempt++;
-                backoffStage = min(backoffStage + 1,MAXSTAGE);
-                ITx = 0;
-                if(retAttempt == MAX_RET){
-                    accummTimeBetSxTx = double(SimTime() - packet.contention_time);
-                    erasePacketsFromQueue(MAC,erased);
-                    dropped++;
-                    backoffStage = 0;   //Resetting due to drop
-                    retAttempt = 0;
-                    backlog = 0;
+                if(backlog == 1){
+                    colTx++;
+                    retAttempt++;
+                    backoffStage = min(backoffStage + 1,MAXSTAGE);
+                    ITx = 0;
+                    if(retAttempt == MAX_RET){
+                        accummTimeBetSxTx = double(SimTime() - packet.contention_time);
+                        erasePacketsFromQueue(MAC,erased);
+                        dropped++;
+                        backoffStage = 0;   //Resetting due to drop
+                        retAttempt = 0;
+                        backlog = 0;
+                        if(MAC.QueueSize() > 0) backlog = 1;
+                        if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                    }
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                }else if(backlog == 0){
+                //This is the event of observing someone else's transmission
+                //in what it is supposed to be an empty slot.
+                //Ack is zero.
+                {
+                    ITx = 0;    //resetting to zero
                     if(MAC.QueueSize() > 0) backlog = 1;
                     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
                 }
-                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
             }else{
                 if(backoffCounter > 0){
                     backoffCounter--;
@@ -239,13 +264,12 @@ void STA :: in_slot(SLOT_notification &slot)
 
     //Transmission
     if(backoffCounter == 0){
-        if(backlog == 1){
-            preparePacketForTransmission(packet,id,SimTime());
-            tx++;
-            ITx = 1;            
-            out_packet(packet);
-        }else if(backlog == 0){
-            computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+        if(backlog != -1){ 
+            ITx = 1;
+            if(backlog == 1){
+                preparePacketForTransmission(packet,id,SimTime());
+                tx++;              
+                out_packet(packet);
         }
     }
 };
