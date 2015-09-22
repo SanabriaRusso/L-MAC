@@ -1,3 +1,11 @@
+/*This is an implementation of L-MAC protocol.
+In principle: 
+    1) from bootup stations keep a backoff counter,
+    even if they are not backlogged.
+*/
+
+
+
 #include <time.h>
 #include <iostream>
 #include <fstream>
@@ -38,7 +46,7 @@ component STA : public TypeII
     	//Node-specific characteristics
         int id;
         int K;  //max queue size
-        int protocol;   //0 = DCF; 1 = L-MAC;
+        int protocol;   //0 = DCF; 1 = L-MAC; 2= A-L-MAC
         int L;  //Packet length
 
         //Queue management
@@ -60,11 +68,12 @@ component STA : public TypeII
         int ITx;    //I transmitted: 0 = no; 1 = yes
 
         //Transmissions
-        double tx;
+        double tx;      //Number of transmission attempts
         double sxTx;    //Successfull transmissions
         double colTx;   //Collisions
         int backlog;    //Is there something in the queue?
         int retAttempt;
+        int ack;        //Did we received an ACK for last transmission?
 
         //Private queue management
         Packet packet;
@@ -97,6 +106,7 @@ void STA :: Start()
     backlog = 0;
     ITx = 0;
     retAttempt = 0;
+    ack = 0;
 
     //Packet details
     packet.L = L;
@@ -145,18 +155,37 @@ void STA :: in_slot(SLOT_notification &slot)
     {
         //Empty slot
         case 0:
-            if(backlog == 1){
-                if(backoffCounter > 0){
-                    backoffCounter--;
-                }
-            }else{
-                if(MAC.QueueSize() > 0)
-                {
-                    backlog = 1;
-                    pickNewPacket(packet,MAC,id,SimTime());
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog);
-                }
+            switch(backlog){
+                case -1:
+                    backlog = 0;
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                    break;
+                case 1:
+                    if(backoffCounter > 0) backoffCounter--;
+                    break;
+                default:
+                    if(backoffCounter > 0) backoffCounter--;
+                    if(MAC.QueueSize() > 0)
+                    {
+                        backlog = 1;
+                        pickNewPacket(packet,MAC,id,SimTime());
+                    }
+                    break;
             }
+            // if(backlog == 1){
+                // if(backoffCounter > 0){
+                    // backoffCounter--;
+                // }
+            // }else if(backlog == 0){
+                // if(MAC.QueueSize() > 0)
+                // {
+                    // backlog = 1;
+                    // pickNewPacket(packet,MAC,id,SimTime());
+                // }
+            // }else if(backlog == -1){    //entering at bootup to start counter
+                // backlog = 0;
+                // computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+            // }
             break;
         //Successful transmission
         case 1:
@@ -164,14 +193,16 @@ void STA :: in_slot(SLOT_notification &slot)
             //we assign a new backoff counter
             if(ITx == 1){
                 sxTx++;
+                ack = 1;
                 accummTimeBetSxTx += double(SimTime() - packet.contention_time);
                 erasePacketsFromQueue(MAC,erased);
                 ITx = 0;    //resetting to zero
-                backoffStage = 0;   //resetting backoff stage for DCF
+                if(protocol != 2) backoffStage = 0;   //resetting backoff stage for DCF and L-MAC
                 backlog = 0;
                 if(MAC.QueueSize() > 0) backlog = 1;
                 if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog);
+                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                ack = 0;    //ack only used to determine the backoff counter
             }else
             //If we observe a sxTx slot, we decrement the counter.
             //Only the sta involved in the sxTx will not decrement it.
@@ -197,7 +228,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     if(MAC.QueueSize() > 0) backlog = 1;
                     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
                 }
-                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog);
+                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
             }else{
                 if(backoffCounter > 0){
                     backoffCounter--;
@@ -208,11 +239,14 @@ void STA :: in_slot(SLOT_notification &slot)
 
     //Transmission
     if(backoffCounter == 0){
-        preparePacketForTransmission(packet,id,SimTime());
-        tx++;
-        ITx = 1;
-        // cout << SimTime() << " transmitting" << endl;
-        out_packet(packet);
+        if(backlog == 1){
+            preparePacketForTransmission(packet,id,SimTime());
+            tx++;
+            ITx = 1;            
+            out_packet(packet);
+        }else if(backlog == 0){
+            computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+        }
     }
 };
 

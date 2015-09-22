@@ -1,8 +1,8 @@
-#define AC 4
+#define BETA 95e-2
 
 using namespace std;
 
-void computeBackoff(int &backoffStage, const int MAXSTAGE, double &counter, int backlog){
+void computeBackoff(int &backoffStage, const int MAXSTAGE, double &counter, int backlog, int ack){
 	int CWmin = 16;
 	if(backlog == 1)
 	{
