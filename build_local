@@ -1,2 +1,2 @@
-./COST/cxx2 L-MAC.cc
-g++ -Wall -o L-MAC L-MAC.cxx
+./COST/cxx2 L-ZC.cc
+g++ -Wall -o L-ZC L-ZC.cxx

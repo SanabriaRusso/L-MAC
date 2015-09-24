@@ -1,4 +1,4 @@
-#define BETA 95e-2
+#define BETA 80e-2
 
 using namespace std;
 
@@ -10,6 +10,7 @@ void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int b
 	{
 		if(ack == 1){
 			counter = CWmin -1;
+			if(txDebug == 1) cout << "Success: " << counter << endl;
 			return;
 		}
 
@@ -23,8 +24,8 @@ void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int b
 			//A random backoff that is not the cycle length or zero. That why -3,
 			//so we keep uniformity in the random selection
 			do{
-				counter = rand() % (int)  (pow(2,backoffStage) * CWmin -3);			
-			}while(counter > 0 && counter != CWmin-1);
+				counter = rand() % (int)  (pow(2,backoffStage) * CWmin -2) + 1;		
+			}while(counter == 0 && counter == CWmin-1);
 			if(txDebug == 1) cout << "Not reusing, random " << counter << endl;
 		}		
 	}

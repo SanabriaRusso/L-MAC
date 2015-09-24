@@ -14,7 +14,7 @@ my %help = (
 				'--help'	=> 1
 			);
 
-die ("******Help\n", "ARGV. field:\n", "0. Repetitions 1. Time 2. Nmax 3. Nmin 4. Jumps 5. Bandwidth 6. Channel errors 7. protocol\n") 
+die ("******Help\n", "ARGV. field:\n", "0. Repetitions 1. Time 2. Nmax 3. Nmin 4. Jumps 5. Bandwidth 6. Channel errors 7. protocol 8. LOAD_Bytes\n") 
 	if (exists $help{$ARGV[0]});
 
 my $rep = $ARGV[0];
@@ -25,7 +25,7 @@ my $jump = $ARGV[4];
 my $bandwidth = $ARGV[5];
 my $errors = $ARGV[6];
 my $protocol = $ARGV[7];
-my $length = 1470;
+my $length = $ARGV[8];
 
 print ("Going to simulate:\n");
 if ($Nmax == $Nmin){
