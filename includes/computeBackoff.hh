@@ -1,9 +1,11 @@
-#define BETA 80e-2
+#define CYCLE 16
 
 using namespace std;
 
-void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int backlog, int ack){
-	int CWmin = 16;
+void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int backlog, int ack, std::bitset<CYCLE> slots,
+	double gamma){
+
+	int CWmin = CYCLE;
 	int txDebug = 0;
 
 	if(backlog != 3)
@@ -16,16 +18,17 @@ void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int b
 
 		int coin = rand() % (int)(100 - 1) + 1;
 		if(txDebug == 1) cout << "Coin: " << coin << endl;
-		if(coin < (int) ((BETA/CWmin) * 100)){
+		if(coin < (int) (gamma * 100)){
 			counter = CWmin -1;
 			if(txDebug == 1) cout << "Reusing the slot after collision" << coin << endl;
 			return;
 		}else{
-			//A random backoff that is not the cycle length or zero. That why -3,
+			//A random backoff that is not zero. That why -3,
 			//so we keep uniformity in the random selection
 			do{
-				counter = rand() % (int)  (pow(2,backoffStage) * CWmin -2) + 1;		
-			}while(counter == 0 && counter == CWmin-1);
+				// if(counter != 0) cout << "Reusing counter: " << counter << " becasue (" << slots.test(counter) << ")" << endl;
+				counter = rand() % (int)  (CWmin -1) + 1;		
+			}while( (counter == 0) && (slots.test(counter)) );
 			if(txDebug == 1) cout << "Not reusing, random " << counter << endl;
 		}		
 	}

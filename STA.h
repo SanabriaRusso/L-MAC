@@ -25,6 +25,7 @@ In principle:
 //Suggested value is MAXSTAGE+1
 #define MAXSTAGE 5
 #define MAX_RET 6
+#define CYCLE 16    //must be equal to CWmin in the backoff function
 
 
 using namespace std;
@@ -71,6 +72,9 @@ component STA : public TypeII
         int backlog;    //Is there something in the queue?
         int retAttempt;
         int ack;        //Did we received an ACK for last transmission?
+        std::bitset< CYCLE > pastSchedule;  //slot information per schedule of size CYCLE
+        int cycleCounter;
+        double gamma;
 
         //Private queue management
         Packet packet;
@@ -114,6 +118,8 @@ void STA :: Start()
 
     //Statistics
     accummTimeBetSxTx = 0;
+    pastSchedule &= 0;
+    gamma = 1.0/(CYCLE - nodesInSim + 2.0);
 
     //Debug
     txDebug = 0;    //Debug in transmission operations [0-1]
@@ -152,7 +158,15 @@ void STA :: Stop()
 };
 
 void STA :: in_slot(SLOT_notification &slot)
-{	
+{
+    if(cycleCounter == 0) cycleCounter = CYCLE;
+    pastSchedule[cycleCounter] = true;
+    if(slot.status != 0) pastSchedule[cycleCounter] = false;
+    pastSchedule >>= 1;
+    cycleCounter--;
+    // cout << cycleCounter << endl;
+    // cout << pastSchedule << endl;
+
     switch(slot.status)
     {
         //Empty slot
@@ -161,7 +175,7 @@ void STA :: in_slot(SLOT_notification &slot)
                 case 3:
                     //Initial setup of the counter
                     backlog = 0;
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack,pastSchedule,gamma);
                     if(txDebug == 1) cout << "+++txDebug "<< SimTime() << " Node-" << id << ": booting with counter: " << backoffCounter << endl;
                     break;
                 case 1:
@@ -179,7 +193,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     //The moment the stations checks if its previous tx slot is empty or not
                     if(ITx == 1 || backoffCounter == 0){
                         ack = 1;
-                        computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                        computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack,pastSchedule,gamma);
                         ack = 0;
                         ITx = 0;
                         if(txDebug == 1) cout << "+++txDebug " << SimTime() << " Node-" << id << ": was not backlogged, virtual tx with counter: " 
@@ -204,7 +218,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     backlog = 0;
                     if(MAC.QueueSize() > 0) backlog = 1;
                     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack,pastSchedule,gamma);
                     ack = 0;    //ack only used to determine the backoff counter
                     if(txDebug == 1) cout << "+++txDebug " << SimTime() << " Node-" << id <<
                         " sxTx, counter: " << backoffCounter << endl;
@@ -216,7 +230,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     ITx = 0;    //resetting to zero
                     if(MAC.QueueSize() > 0) backlog = 1;
                     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack,pastSchedule,gamma);
                     if(txDebug == 1) cout << "+++txDebug " << SimTime() << " Node-" << id <<
                         " other tx is occupying my slot, counter: " << backoffCounter << endl;
                 }
@@ -259,7 +273,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     if(txDebug == 1) cout << "+++txDebug " << SimTime() << " Node-" << id <<
                         " other tx is occupying my slot, counter: ";
                 }
-                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack,pastSchedule,gamma);
                 if(txDebug == 1) cout << backoffCounter << endl;
             }else{
                 if(backoffCounter > 0) backoffCounter--;
