@@ -23,11 +23,19 @@ void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int b
 			if(txDebug == 1) cout << "Reusing the slot after collision" << coin << endl;
 			return;
 		}else{
-			do{
-				// if(counter != 0) cout << "Reusing counter: " << counter << " becasue (" << slots.test(counter) << ")" << endl;
-				counter = rand() % (int)  (CWmin -1) + 1;		
-			}while( (counter == 0) && (slots.test(counter)) );
-			if(txDebug == 1) cout << "Not reusing, random " << counter << endl;
+			if(backoffStage == 0){
+				do{
+					// if(counter != 0) cout << "Reusing counter: " << counter << " becasue (" << slots.test(counter) << ")" << endl;
+					counter = rand() % (int)  (CWmin -1) + 1;		
+				}while( (counter == 0) && (slots.test(counter)) );
+				if(txDebug == 1) cout << "Not reusing, random " << counter << endl;
+			}else{
+				do{
+					// if(counter != 0) cout << "Reusing counter: " << counter << " becasue (" << slots.test(counter) << ")" << endl;
+					counter = rand() % (int)  (pow(2,backoffStage) -1) + 1;		
+				}while(counter == 0);
+				if(txDebug == 1) cout << "Not reusing, random " << counter << endl;				
+			}
 		}		
 	}
 
