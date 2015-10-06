@@ -26,6 +26,7 @@ component BatchPoissonSource : public TypeII
 		int MaxBatch;	
 		double packet_rate;
 		double packetsGenerated;
+		int alwaysSaturated;
 	
 	public:
 		void Setup();
@@ -36,6 +37,7 @@ component BatchPoissonSource : public TypeII
 
 void BatchPoissonSource :: Setup()
 {
+	alwaysSaturated = 1;
 
 };
 
@@ -58,9 +60,16 @@ void BatchPoissonSource :: new_packet(trigger_t &)
 	Packet packet;
 	int RB = (int) Random(MaxBatch)+1;
 	packet.L = L;
+	packet.aggregation = 1;
 	packet.queuing_time = SimTime();
 	out(packet);
 	packetsGenerated++;
-	inter_packet_timer.Set(SimTime()+Exponential(RB/packet_rate));	
+
+	//Putting and "else" in this statement will slowdown too much the simulation.
+	//For these tests the alwaysSaturated is forced to 1.
+	if(alwaysSaturated == 1){
+		if(packetsGenerated < MAXSEQ)
+			inter_packet_timer.Set(SimTime()+Exponential(RB/packet_rate));	
+	}
 };
 
