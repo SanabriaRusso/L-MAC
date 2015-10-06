@@ -52,6 +52,7 @@ component STA : public TypeII
         double admittedPackets;
         double erased; //Erased from the queue
         double dropped;
+        int alwaysSaturated;
 
         //Statistics
         double accummTimeBetSxTx;
@@ -116,6 +117,9 @@ void STA :: Start()
     packet.L = L;
     packet.source = id;
 
+    //Queue
+    alwaysSaturated = 1;
+
     //Statistics
     accummTimeBetSxTx = 0;
     pastSchedule &= 0;
@@ -132,28 +136,28 @@ void STA :: Stop()
     if(backlog == 1) accummTimeBetSxTx += double(SimTime() - packet.contention_time);
 
     cout << "-Station-" << id << ":" << endl;
-    if(admittedPackets - erased - MAC.QueueSize() == 0){
-        cout << "\tTotal throughput: " << sxTx*L*8.0 / SimTime() << endl;
-        cout << "\tCollisions: " << colTx/tx << endl;
-        cout << "\tReceived: " << inPackets << " packets" << endl;
-        cout << "\tDropped: " << dropped << " packets" << endl;
-        cout << "\tAvg. seconds between sxTx " << accummTimeBetSxTx / sxTx << endl;
+    if((admittedPackets - erased - MAC.QueueSize() == 0) || alwaysSaturated == 1){
+            cout << "\tTotal throughput: " << sxTx*L*8.0 / SimTime() << endl;
+            cout << "\tCollisions: " << colTx/tx << endl;
+            cout << "\tReceived: " << inPackets << " packets" << endl;
+            cout << "\tDropped: " << dropped << " packets" << endl;
+            cout << "\tAvg. seconds between sxTx " << accummTimeBetSxTx / sxTx << endl;
 
-        //Statistics
-        throughput = sxTx*L*8.0 / SimTime();
-        collisions = colTx/tx;
-        accummTimeBetSxTx /= sxTx;
+            //Statistics
+            throughput = sxTx*L*8.0 / SimTime();
+            collisions = colTx/tx;
+            accummTimeBetSxTx /= sxTx;
 
-        //Creating the output file
-        string logName = "sta-" + to_string(id) + ".log";        
-        string routeToFile = "Results/stations/" + logName;
-        statistics.open(routeToFile.c_str(), ios::app);
-        dumpStationLog(statistics,nodesInSim,throughput,collisions,accummTimeBetSxTx/sxTx);
-        statistics.close();
+            //Creating the output file
+            string logName = "sta-" + to_string(id) + ".log";        
+            string routeToFile = "Results/stations/" + logName;
+            statistics.open(routeToFile.c_str(), ios::app);
+            dumpStationLog(statistics,nodesInSim,throughput,collisions,accummTimeBetSxTx/sxTx);
+            statistics.close();
 
-    }else{
-        cout << "Something's wrong with either the erasure or admittance of packets" << endl;
-    }
+        }else{
+            cout << "Something's wrong with either the erasure or admittance of packets" << endl;
+        }
 
 };
 
@@ -212,7 +216,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     sxTx++;
                     ack = 1;
                     accummTimeBetSxTx += double(SimTime() - packet.contention_time);
-                    erasePacketsFromQueue(MAC,erased);
+                    erasePacketsFromQueue(MAC,erased,alwaysSaturated);
                     ITx = 0;    //resetting to zero
                     if(protocol != 2) backoffStage = 0;   //resetting backoff stage for DCF and L-MAC
                     backlog = 0;
@@ -253,7 +257,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     ITx = 0;
                     if(retAttempt == MAX_RET){
                         accummTimeBetSxTx = double(SimTime() - packet.contention_time);
-                        erasePacketsFromQueue(MAC,erased);
+                        erasePacketsFromQueue(MAC,erased,alwaysSaturated);
                         dropped++;
                         backoffStage = 0;   //Resetting due to drop
                         retAttempt = 0;

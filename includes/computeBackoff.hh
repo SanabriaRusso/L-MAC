@@ -23,8 +23,6 @@ void computeBackoff(int backoffStage, const int MAXSTAGE, double &counter, int b
 			if(txDebug == 1) cout << "Reusing the slot after collision" << coin << endl;
 			return;
 		}else{
-			//A random backoff that is not zero. That why -3,
-			//so we keep uniformity in the random selection
 			do{
 				// if(counter != 0) cout << "Reusing counter: " << counter << " becasue (" << slots.test(counter) << ")" << endl;
 				counter = rand() % (int)  (CWmin -1) + 1;		
