@@ -46,6 +46,7 @@ component STA : public TypeII
         double admittedPackets;
         double erased; //Erased from the queue
         double dropped;
+        int isAlwaysSaturated;
 
         //Statistics
         double accummTimeBetSxTx;
@@ -63,6 +64,7 @@ component STA : public TypeII
         double tx;
         double sxTx;    //Successfull transmissions
         double colTx;   //Collisions
+        int ack;     //Result of the transmission
         int backlog;    //Is there something in the queue?
         int retAttempt;
 
@@ -97,6 +99,8 @@ void STA :: Start()
     backlog = 0;
     ITx = 0;
     retAttempt = 0;
+    ack = 0;
+    isAlwaysSaturated = 1;
 
     //Packet details
     packet.L = L;
@@ -114,7 +118,7 @@ void STA :: Stop()
     if(backlog == 1) accummTimeBetSxTx += double(SimTime() - packet.contention_time);
 
     cout << "-Station-" << id << ":" << endl;
-    if(admittedPackets - erased - MAC.QueueSize() == 0){
+    if(admittedPackets - erased - MAC.QueueSize() == 0 || isAlwaysSaturated == 1){
         cout << "\tTotal throughput: " << sxTx*L*8.0 / SimTime() << endl;
         cout << "\tCollisions: " << colTx/tx << endl;
         cout << "\tReceived: " << inPackets << " packets" << endl;
@@ -154,7 +158,7 @@ void STA :: in_slot(SLOT_notification &slot)
                 {
                     backlog = 1;
                     pickNewPacket(packet,MAC,id,SimTime());
-                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog);
+                    computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
                 }
             }
             break;
@@ -164,14 +168,16 @@ void STA :: in_slot(SLOT_notification &slot)
             //we assign a new backoff counter
             if(ITx == 1){
                 sxTx++;
+                ack = 1;
                 accummTimeBetSxTx += double(SimTime() - packet.contention_time);
-                erasePacketsFromQueue(MAC,erased);
+                erasePacketsFromQueue(MAC,erased,isAlwaysSaturated);
                 ITx = 0;    //resetting to zero
                 backoffStage = 0;   //resetting backoff stage for DCF
                 backlog = 0;
                 if(MAC.QueueSize() > 0) backlog = 1;
                 if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
-                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog);
+                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
+                ack = 0;
             }else
             //If we observe a sxTx slot, we decrement the counter.
             //Only the sta involved in the sxTx will not decrement it.
@@ -189,7 +195,7 @@ void STA :: in_slot(SLOT_notification &slot)
                 ITx = 0;
                 if(retAttempt == MAX_RET){
                     accummTimeBetSxTx = double(SimTime() - packet.contention_time);
-                    erasePacketsFromQueue(MAC,erased);
+                    erasePacketsFromQueue(MAC,erased,isAlwaysSaturated);
                     dropped++;
                     backoffStage = 0;   //Resetting due to drop
                     retAttempt = 0;
@@ -197,7 +203,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     if(MAC.QueueSize() > 0) backlog = 1;
                     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
                 }
-                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog);
+                computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
             }else{
                 if(backoffCounter > 0){
                     backoffCounter--;
