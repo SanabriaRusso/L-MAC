@@ -51,6 +51,7 @@ component STA : public TypeII
         double admittedPackets;
         double erased; //Erased from the queue
         double dropped;
+        double alwaysSaturated;
 
         //Statistics
         double accummTimeBetSxTx;
@@ -115,6 +116,9 @@ void STA :: Start()
     //Statistics
     accummTimeBetSxTx = 0;
 
+    //Queue
+    alwaysSaturated = 1;
+
     //Debug
     txDebug = 0;    //Debug in transmission operations [0-1]
 };
@@ -126,7 +130,7 @@ void STA :: Stop()
     if(backlog == 1) accummTimeBetSxTx += double(SimTime() - packet.contention_time);
 
     cout << "-Station-" << id << ":" << endl;
-    if(admittedPackets - erased - MAC.QueueSize() == 0){
+    if(admittedPackets - erased - MAC.QueueSize() == 0 || alwaysSaturated == 1){
         cout << "\tTotal throughput: " << sxTx*L*8.0 / SimTime() << endl;
         cout << "\tCollisions: " << colTx/tx << endl;
         cout << "\tReceived: " << inPackets << " packets" << endl;
@@ -198,7 +202,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     sxTx++;
                     ack = 1;
                     accummTimeBetSxTx += double(SimTime() - packet.contention_time);
-                    erasePacketsFromQueue(MAC,erased);
+                    erasePacketsFromQueue(MAC,erased,alwaysSaturated);
                     ITx = 0;    //resetting to zero
                     if(protocol != 2) backoffStage = 0;   //resetting backoff stage for DCF and L-MAC
                     backlog = 0;
@@ -239,7 +243,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     ITx = 0;
                     if(retAttempt == MAX_RET){
                         accummTimeBetSxTx = double(SimTime() - packet.contention_time);
-                        erasePacketsFromQueue(MAC,erased);
+                        erasePacketsFromQueue(MAC,erased,alwaysSaturated);
                         dropped++;
                         backoffStage = 0;   //Resetting due to drop
                         retAttempt = 0;

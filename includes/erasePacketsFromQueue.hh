@@ -2,8 +2,8 @@
 
 using namespace std;
 
-void erasePacketsFromQueue(FIFO <Packet> &Q, double &erased)
+void erasePacketsFromQueue(FIFO <Packet> &Q, double &erased, int alwaysSaturated)
 {
     erased++;
-    Q.DelFirstPacket();
+    if(alwaysSaturated == 0) Q.DelFirstPacket();
 }
