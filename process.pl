@@ -1,4 +1,4 @@
-#!/bin/perl
+#!/usr/local/bin/perl
 use warnings;
 use strict;
 use Data::Dumper qw(Dumper);
@@ -7,7 +7,7 @@ use Statistics::Basic qw(:all);
 my @inputData;
 my $highNodes = 0;
 my $lowNodes = 10000;
-my $outputFile = 'Results/processed_toPlot.txt';
+my $outputFile = 'Results/L-MAC.dat';
 
 ####Finding the nodes limits based on the file.
 my $filename = $ARGV[0];
