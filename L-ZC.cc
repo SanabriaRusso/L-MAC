@@ -11,6 +11,7 @@
 #include "BatchPoissonSource.h"
 #include "stats/stats.h"
 #include "includes/dumpWholeData.hh"
+#include "includes/JFI.hh"
 
 using namespace std;
 
@@ -80,22 +81,27 @@ void SlottedCSMA :: Stop()
 {	
 
 	double acummThroughput = 0;
+	double throughput [Nodes];
 	double avgFracCollisions = 0;
 	double totalCollisions = channel.collision_slots;
 	double avgTimeBetSxTx = 0;
+	double fairnessIndex = 0;
 	for(int i = 0; i < Nodes; i++){
 		acummThroughput += stas[i].throughput;
+		throughput[i] = stas[i].throughput;
 		avgFracCollisions += stas[i].collisions;
 		avgTimeBetSxTx += stas[i].accummTimeBetSxTx;
 	}
 	avgFracCollisions /= Nodes;
 	avgTimeBetSxTx /= Nodes;
+	JFI(Nodes,throughput,fairnessIndex);
 
 
 	cout << "--------------- Results ---------------" << endl;
 	cout << "Aggregated Throughput: " << acummThroughput << endl;
 	cout << "Avg. Frac. Collisions: " << avgFracCollisions << endl;
 	cout << "Avg. Time. Bet. SxTx: " << avgTimeBetSxTx << endl;
+	cout << "JFI: " << fairnessIndex << endl;
 
 	//--------------------------------------------------------------//
 	//-------------------Writing the results------------------------//
@@ -103,7 +109,8 @@ void SlottedCSMA :: Stop()
 
 	ofstream output;
 	output.open("Results/output.txt", ios::app);
-	dumpWholeData(output,Nodes,acummThroughput,avgFracCollisions,totalCollisions,avgTimeBetSxTx);
+	dumpWholeData(output,Nodes,acummThroughput,avgFracCollisions,totalCollisions,
+		avgTimeBetSxTx,fairnessIndex);
 	// output.close();
 	
 };

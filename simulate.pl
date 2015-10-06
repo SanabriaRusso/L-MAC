@@ -1,4 +1,4 @@
-#!/bin/perl
+#!/usr/local/bin/perl
 
 use warnings;
 use strict;
@@ -63,7 +63,6 @@ OUTTER: foreach my $i (@jumps){
 		(print ("\n\n********Execution failed\n\tQuitting iterations\n") and last OUTTER) if ($? != 0);
 	}
 }
-
 
 #Calling the parser
 my $parserFile = 'process.pl';

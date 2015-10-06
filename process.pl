@@ -1,4 +1,4 @@
-#!/bin/perl
+#!/usr/local/bin/perl
 use warnings;
 use strict;
 use Data::Dumper qw(Dumper);
@@ -7,7 +7,7 @@ use Statistics::Basic qw(:all);
 my @inputData;
 my $highNodes = 0;
 my $lowNodes = 10000;
-my $outputFile = 'Results/processed_toPlot.txt';
+my $outputFile = 'Results/L-ZC.dat';
 
 ####Finding the nodes limits based on the file.
 my $filename = $ARGV[0];
@@ -36,7 +36,7 @@ open(my $fw, ">", $outputFile)
 ##Odd indexes are standard deviations if not defined
 print $fw 
 ("#1 Nodes,                 #2 AvgThroughput,               #4 totalCol, 
-  #6 fractOfCol             #8 AvgTimeBetSxTx\n");
+  #6 fractOfCol             #8 AvgTimeBetSxTx				#10 JFI\n");
 
 OUTTER: foreach($lowNodes .. $highNodes)
 {
