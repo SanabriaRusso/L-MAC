@@ -166,7 +166,6 @@ void STA :: in_slot(SLOT_notification &slot)
         case 1:
             //If this station transmitted in observed slot,
             //we assign a new backoff counter
-        cout << "EU" << endl;
             if(ITx == 1){
                 sxTx++;
                 ack = 1;
@@ -204,6 +203,7 @@ void STA :: in_slot(SLOT_notification &slot)
                     if(MAC.QueueSize() > 0) backlog = 1;
                     if(backlog == 1) pickNewPacket(packet,MAC,id,SimTime());
                 }
+                ack = 0;
                 computeBackoff(backoffStage,MAXSTAGE,backoffCounter,backlog,ack);
             }else{
                 if(backoffCounter > 0){
