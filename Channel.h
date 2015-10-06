@@ -89,7 +89,7 @@ void Channel :: Start()
 	aggregation = 1;
 	errorProbability = 0;
 
-	rate = 11;
+	rate = 65;
 	txDebug = 0;
 
 	slot_time.Set(SimTime()); // Let's go!	
@@ -159,12 +159,15 @@ void Channel :: in_packet(Packet &packet)
 
 
 	if(packet.L > L_max) L_max = packet.L;
-	//default
-	succ_tx_duration = (SIFS + 32e-06 + ceil((16 + aggregation*(32+(L_max*8)+288) + 6)/LDBPS)*TSYM + SIFS + TBack + DIFS + empty_slot_duration);
 	double ACK;
 	double frame;
 
 	switch(rate){
+		case 65:
+			//As in the Journal paper, Table I.
+			succ_tx_duration = (SIFS + 32e-06 + ceil((16 + aggregation*(32+(L_max*8)+288) + 6)/LDBPS)*TSYM + 
+				 SIFS + TBack + DIFS + empty_slot_duration);
+			break;
 		case 48:
 			//JUST FOR SINGLE FRAME TRANSMISSIONS.
 			//IT CURRENTLY DOES NOT SUPPORT AGGREGATION
@@ -193,6 +196,7 @@ void Channel :: in_packet(Packet &packet)
 			// T = frame + SIFS + ACK + DIFS + CWaverage*SLOT;
 			//Last 9 is an empty slot and 7.5 is CWmin/2
 			succ_tx_duration = frame * 1e-06 + SIFS + ACK * 1e-06 + DIFS11 + 9.0 * 7.5 * 1e-06;
+			break;
 	}
 	collision_duration = succ_tx_duration;
 }
