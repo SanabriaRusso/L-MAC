@@ -166,6 +166,7 @@ void STA :: in_slot(SLOT_notification &slot)
         case 1:
             //If this station transmitted in observed slot,
             //we assign a new backoff counter
+        cout << "EU" << endl;
             if(ITx == 1){
                 sxTx++;
                 ack = 1;
