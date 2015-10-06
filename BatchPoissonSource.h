@@ -58,6 +58,7 @@ void BatchPoissonSource :: new_packet(trigger_t &)
 	Packet packet;
 	int RB = (int) Random(MaxBatch)+1;
 	packet.L = L;
+	packet.aggregation = 1;
 	packet.queuing_time = SimTime();
 	out(packet);
 	packetsGenerated++;
