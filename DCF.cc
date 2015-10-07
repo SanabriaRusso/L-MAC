@@ -88,6 +88,7 @@ void SlottedCSMA :: Stop()
 		avgFracCollisions += stas[i].collisions;
 		avgTimeBetSxTx += stas[i].accummTimeBetSxTx;
 	}
+	// acummThroughput = channel.totalBitsSent / SimTime();
 	avgFracCollisions /= Nodes;
 	avgTimeBetSxTx /= Nodes;
 

@@ -59,6 +59,7 @@ component Channel : public TypeII
 	public: // Statistics
 		double collision_slots, empty_slots, succesful_slots, total_slots;
 		signed long long slotNum;
+		double totalBitsSent;
 };
 
 void Channel :: Setup()
@@ -91,6 +92,7 @@ void Channel :: Start()
 
 	rate = 65;
 	txDebug = 0;
+	totalBitsSent = 0;
 
 	slot_time.Set(SimTime()); // Let's go!	
 };
@@ -137,6 +139,7 @@ void Channel :: EndReceptionTime(trigger_t &)
 	{
 		slot_time.Set(SimTime()+succ_tx_duration);		
 		succesful_slots++;
+		totalBitsSent += aggregation*L_max*8;
 	}
 	if(number_of_transmissions_in_current_slot > 1)
 	{
