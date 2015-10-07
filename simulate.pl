@@ -25,7 +25,7 @@ my $jump = $ARGV[4];
 my $bandwidth = $ARGV[5];
 my $errors = $ARGV[6];
 my $protocol = $ARGV[7];
-my $length = 1470;
+my $length = 1024;
 
 print ("Going to simulate:\n");
 if ($Nmax == $Nmin){
