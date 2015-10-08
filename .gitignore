@@ -1,4 +1,7 @@
+*.cxx
+Results/
+compcxx*_
+papers/
 *.DS_Store
-bECA*
 L-ZC*
 L-MAC*
