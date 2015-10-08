@@ -1,7 +1,9 @@
+DCF
 *.cxx
 Results/
-compcxx*_
+compcxx*
 papers/
 *.DS_Store
-L-ZC*
-L-MAC*
+bECA
+L-ZC
+L-MAC
