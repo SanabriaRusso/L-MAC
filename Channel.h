@@ -199,5 +199,7 @@ void Channel :: in_packet(Packet &packet)
 			break;
 	}
 	collision_duration = succ_tx_duration;
+
+	// cout << succ_tx_duration << endl;
 }
 
