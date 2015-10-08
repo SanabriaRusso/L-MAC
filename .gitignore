@@ -1,0 +1,15 @@
+L-MAC*
+DCF
+DCF.cxx
+L-ZC
+L-ZC.cxx
+LMAC.cxx
+Results/
+bECA
+bECA.cxx
+compcxx_DCF.h
+compcxx_L-MAC.h
+compcxx_L-ZC.h
+compcxx_LMAC.h
+compcxx_bECA.h
+papers/
