@@ -25,7 +25,7 @@ In principle:
 //Suggested value is MAXSTAGE+1
 #define MAXSTAGE 5
 #define MAX_RET 6
-#define CYCLE 16    //must be equal to CWmin in the backoff function
+#define CYCLE 8    //must be equal to CWmin in the backoff function
 
 
 using namespace std;

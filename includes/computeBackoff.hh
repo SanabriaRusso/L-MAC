@@ -1,4 +1,4 @@
-#define CYCLE 16
+#define CYCLE 8 
 
 using namespace std;
 
